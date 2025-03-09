@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, X, ExternalLink, AlertCircle, Eye } from "lucide-react";
+import { AlertTriangle, X, ExternalLink, AlertCircle, Eye, ShieldCheck } from "lucide-react";
 import type { JSX } from "react/jsx-runtime";
 
 export default function Scanner() {
@@ -40,55 +40,31 @@ export default function Scanner() {
         setProgress(0);
 
         try {
-            console.log("🔍 Starting spider scan for:", url);
+            console.log("🔍 Starting scan for:", url);
 
-            // 1️⃣ Start de spider
-            const spiderRes = await fetch(`/api/spider?url=${encodeURIComponent(url)}`);
-            const spiderData = await spiderRes.json();
-            if (!spiderRes.ok) throw new Error(spiderData.error || "❌ Failed to start spider scan");
-
-            console.log("✅ Spider scan started with ID:", spiderData.scanId);
-
-            // 2️⃣ Wacht tot de spider klaar is
-            let spiderStatus = "0";
-            while (spiderStatus !== "100") {
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                const statusRes = await fetch(`/api/spider/status?scanId=${spiderData.scanId}`);
-                const statusData = await statusRes.json();
-                spiderStatus = statusData.status;
-                setProgress(parseInt(spiderStatus) / 2); // Spider is 50% van het proces
-                console.log(`🕷 Spider progress: ${spiderStatus}%`);
-            }
-
-            console.log("✅ Spider scan completed, starting active scan...");
-
-            // 3️⃣ Start de actieve scan
             const scanRes = await fetch(`/api/scan?url=${encodeURIComponent(url)}`);
             const scanData = await scanRes.json();
-            if (!scanRes.ok) throw new Error(scanData.error || "❌ Failed to start scan");
+            if (!scanRes.ok) throw new Error(scanData.error || "Failed to start scan");
 
             setScanId(scanData.scanId);
-            console.log("🛠 Active scan started with ID:", scanData.scanId);
+            console.log("🛠 Scan started with ID:", scanData.scanId);
 
-            // 4️⃣ Wacht tot de actieve scan klaar is
             let scanStatus = "0";
             while (scanStatus !== "100") {
                 await new Promise(resolve => setTimeout(resolve, 2000));
                 const statusRes = await fetch(`/api/status?scanId=${scanData.scanId}`);
                 const statusData = await statusRes.json();
                 scanStatus = statusData.status;
-                setProgress(50 + parseInt(scanStatus) / 2); // Scan is 50%-100%
+                setProgress(parseInt(scanStatus));
                 console.log(`🛡 Scan progress: ${scanStatus}%`);
             }
 
             console.log("✅ Scan completed, fetching results...");
 
-            // 5️⃣ Haal de resultaten op
             const resultsRes = await fetch(`/api/results?baseurl=${encodeURIComponent(url)}`);
             const resultsData = await resultsRes.json();
-            if (!resultsRes.ok) throw new Error(resultsData.error || "❌ Failed to fetch results");
+            if (!resultsRes.ok) throw new Error(resultsData.error || "Failed to fetch results");
 
-            // ✅ Filter dubbele kwetsbaarheden uit
             const uniqueResults = Array.from(new Map(resultsData.vulnerabilities.map(vul => [vul.name, vul])).values());
             setResults(uniqueResults);
             setScanComplete(true);
@@ -102,54 +78,59 @@ export default function Scanner() {
     }
 
     return (
-        <div className="min-h-screen bg-background p-8 text-text">
-            <div className="max-w-3xl mx-auto space-y-6">
-                <h1 className="text-3xl font-bold">CyberScan</h1>
+        <div className="flex min-h-screen items-center justify-center bg-gray-900 text-white px-4">
+            <div className="w-full max-w-3xl space-y-6">
+                <h1 className="text-4xl font-bold text-center text-white flex items-center justify-center gap-2">
+                    <ShieldCheck className="text-blue-500 w-8 h-8" />
+                    CyberScan
+                </h1>
+                <p className="text-center text-gray-400">Automated web vulnerability scanner for security professionals</p>
 
-                <div className="bg-card shadow-card p-6 rounded border border-border space-y-4">
+                <div className="bg-gray-800 shadow-lg p-6 rounded-xl border border-gray-700">
+                    <h2 className="text-xl font-semibold mb-2">Start New Scan</h2>
+                    <label className="block text-gray-400 text-sm mb-1">Target URL</label>
                     <input
-                        className="w-full border p-2 rounded"
-                        placeholder="Voer een URL in"
+                        className="w-full bg-gray-700 border border-gray-600 p-3 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="https://example.com"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                     />
                     <button
-                        className="bg-blue-500 text-white px-4 py-2 rounded"
+                        className="w-full mt-4 bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg flex items-center justify-center gap-2"
                         onClick={handleScanAndFetch}
                         disabled={loading}
                     >
-                        {loading ? "🔄 Scannen..." : "🚀 Start Scan"}
+                        {loading ? "🔄 Scanning..." : "🛡 Start Security Scan"}
                     </button>
-                    {error && <p className="text-red-500">{error}</p>}
-                    {scanId && <p>📌 Scan gestart met ID: <strong>{scanId}</strong></p>}
+                    {error && <p className="text-red-500 mt-2">{error}</p>}
+                    {scanId && <p className="text-gray-300 mt-2 text-center">📌 Scan gestart met ID: <strong>{scanId}</strong></p>}
                 </div>
 
-                {/* 🚀 Voortgangsbalk */}
                 {loading && (
-                    <div className="relative w-full h-4 bg-gray-300 rounded">
+                    <div className="w-full bg-gray-700 h-4 rounded-lg overflow-hidden">
                         <div
-                            className="absolute top-0 left-0 h-4 bg-blue-500 rounded transition-all"
+                            className="bg-blue-500 h-4 rounded-lg transition-all"
                             style={{ width: `${progress}%` }}
                         />
                     </div>
                 )}
 
                 {scanComplete && results.length === 0 && (
-                    <p className="text-green-500 p-4 border border-green-500 rounded">
+                    <p className="text-green-500 p-4 border border-green-500 rounded-lg text-center">
                         ✅ Geen kwetsbaarheden gevonden!
                     </p>
                 )}
 
                 {results && results.length > 0 && (
-                    <div className="bg-card shadow-card rounded border border-border">
-                        <h2 className="text-xl font-semibold p-4 border-b border-border">
+                    <div className="bg-gray-800 shadow-lg rounded-xl border border-gray-700">
+                        <h2 className="text-xl font-semibold p-4 border-b border-gray-600">
                             🔍 Scan Resultaten ({results.length})
                         </h2>
                         <ul>
                             {results.map((alert, idx) => (
                                 <li
                                     key={idx}
-                                    className="flex items-center justify-between p-4 border-b border-border hover:bg-background cursor-pointer"
+                                    className="flex items-center justify-between p-4 border-b border-gray-600 hover:bg-gray-700 cursor-pointer"
                                     onClick={() => setSelectedAlert(alert)}
                                 >
                                     <div className="flex items-center gap-2">

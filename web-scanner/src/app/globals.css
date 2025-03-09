@@ -3,13 +3,9 @@
 @tailwind utilities;
 
 body {
-    @apply bg-background text-text;
+    @apply bg-gray-900 text-white;
 }
 
 button {
-    @apply px-4 py-2 bg-primary rounded text-text shadow-card transition hover:bg-green-600;
-}
-
-input {
-    @apply bg-card border border-border rounded px-4 py-2 text-text placeholder-gray-400;
+    @apply px-4 py-2 bg-blue-500 rounded text-white shadow-lg transition hover:bg-blue-600;
 }
