@@ -1,3 +1,4 @@
+//api/scan/route
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 
@@ -16,14 +17,24 @@ export async function GET(req: NextRequest) {
 
     try {
         console.log(`Starting scan for URL: ${url}`);
-        // Start de scan via ZAP
+
+        // ZAP kan weigeren een scan te starten als de URL niet toegankelijk is.
+        console.log("Ensuring the URL is added to the scan tree...");
+        await axios.get(`${ZAP_BASE_URL}/JSON/core/action/accessUrl/`, {
+            params: { apikey: ZAP_API_KEY, url },
+        });
+
+
         const response = await axios.get(`${ZAP_BASE_URL}/JSON/ascan/action/scan/`, {
             params: { apikey: ZAP_API_KEY, url },
         });
+
         console.log("Scan response:", response.data);
-        if (!response.data.scan) {
-            throw new Error("No scan ID received from ZAP");
+
+        if (!response.data.scan || response.data.scan === "0") {
+            throw new Error("Failed to start active scan. Check if the site is allowed in ZAP.");
         }
+
         return NextResponse.json({ message: "Scan started", scanId: response.data.scan });
     } catch (error: any) {
         console.error("Error starting scan:", error.response?.data || error.message);

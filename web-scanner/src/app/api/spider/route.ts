@@ -1,3 +1,4 @@
+//api/spider/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 
@@ -29,31 +30,9 @@ export async function GET(req: NextRequest) {
 
         console.log(`Spider scan started with ID: ${scanId}`);
 
-
-        let spiderStatus = "0";
-        while (spiderStatus !== "100") {
-            await new Promise((resolve) => setTimeout(resolve, 5000));
-            const statusRes = await axios.get(`${ZAP_BASE_URL}/JSON/spider/view/status/`, {
-                params: { apikey: ZAP_API_KEY, scanId },
-            });
-            spiderStatus = statusRes.data.status;
-            console.log(`Spider progress: ${spiderStatus}%`);
-        }
-
-        console.log("Spider scan completed, starting active scan...");
-
-
-        const activeScanRes = await axios.get(`${ZAP_BASE_URL}/JSON/ascan/action/scan/`, {
-            params: { apikey: ZAP_API_KEY, url },
-        });
-
-        if (!activeScanRes.data.scan) {
-            throw new Error("No active scan ID received from ZAP");
-        }
-
-        return NextResponse.json({ message: "Active scan started", scanId: activeScanRes.data.scan });
+        return NextResponse.json({ scanId });
     } catch (error: any) {
-        console.error("Error starting scan:", error.response?.data || error.message);
+        console.error("Error starting spider scan:", error.response?.data || error.message);
         return NextResponse.json({ error: error.message || "Unknown error" }, { status: 500 });
     }
 }
