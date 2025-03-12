@@ -31,8 +31,8 @@ export async function GET(req: NextRequest) {
         console.log(`Spider scan started with ID: ${scanId}`);
 
         return NextResponse.json({ scanId });
-    } catch (error: any) {
-        console.error("Error starting spider scan:", error.response?.data || error.message);
-        return NextResponse.json({ error: error.message || "Unknown error" }, { status: 500 });
+    }catch (error:unknown) {
+        console.error("Error starting scan:" , error );
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
     }
 }

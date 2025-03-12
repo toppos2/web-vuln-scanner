@@ -25,8 +25,8 @@ export async function GET(req: NextRequest) {
             params: { apikey: ZAP_API_KEY, baseurl, start: 0, count: 9999 },
         });
         return NextResponse.json({ vulnerabilities: response.data.alerts || [] });
-    } catch (error: any) {
-        console.error("Error fetching results:", error.response?.data || error.message);
-        return NextResponse.json({ error: error.message || "Unknown error" }, { status: 500 });
+    } catch (error:unknown) {
+        console.error("Error starting scan:" , error );
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
     }
 }

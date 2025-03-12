@@ -22,8 +22,8 @@ export async function GET(req: NextRequest) {
         });
 
         return NextResponse.json({ status: statusRes.data.status });
-    } catch (error: any) {
-        console.error("Error checking scan status:", error.response?.data || error.message);
-        return NextResponse.json({ error: error.message || "Unknown error" }, { status: 500 });
+    } catch (error:unknown) {
+        console.error("Error starting scan:" , error );
+        return NextResponse.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
     }
 }

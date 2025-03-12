@@ -1,14 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, X, ExternalLink, AlertCircle, Eye, ShieldCheck } from "lucide-react";
+import { AlertTriangle, AlertCircle, ShieldCheck } from "lucide-react";
 import type { JSX } from "react/jsx-runtime";
+
+interface Vulnerability {
+    name: string;
+    risk: string;
+    description?: string;
+
+}
 
 export default function Scanner() {
     const [url, setUrl] = useState("");
     const [scanId, setScanId] = useState<string | null>(null);
-    const [results, setResults] = useState<any[]>([]);
-    const [selectedAlert, setSelectedAlert] = useState<any | null>(null);
+    const [results, setResults] = useState<Vulnerability[]>([]);
+   // const [selectedAlert, setSelectedAlert] = useState<Vulnerability | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [scanComplete, setScanComplete] = useState(false);
@@ -65,13 +72,14 @@ export default function Scanner() {
             const resultsData = await resultsRes.json();
             if (!resultsRes.ok) throw new Error(resultsData.error || "Failed to fetch results");
 
-            const uniqueResults = Array.from(new Map(resultsData.vulnerabilities.map(vul => [vul.name, vul])).values());
+            const uniqueResults = Array.from(new Set(resultsData.vulnerabilities))as Vulnerability[];
             setResults(uniqueResults);
+
             setScanComplete(true);
             setProgress(100);
 
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to start scan");
         } finally {
             setLoading(false);
         }
@@ -108,10 +116,7 @@ export default function Scanner() {
 
                 {loading && (
                     <div className="w-full bg-gray-700 h-4 rounded-lg overflow-hidden">
-                        <div
-                            className="bg-blue-500 h-4 rounded-lg transition-all"
-                            style={{ width: `${progress}%` }}
-                        />
+                        <div className="bg-blue-500 h-4 rounded-lg transition-all" style={{ width: `${progress}%` }} />
                     </div>
                 )}
 
@@ -121,17 +126,15 @@ export default function Scanner() {
                     </p>
                 )}
 
-                {results && results.length > 0 && (
+                {results.length > 0 && (
                     <div className="bg-gray-800 shadow-lg rounded-xl border border-gray-700">
-                        <h2 className="text-xl font-semibold p-4 border-b border-gray-600">
-                            🔍 Scan Resultaten ({results.length})
-                        </h2>
+                        <h2 className="text-xl font-semibold p-4 border-b border-gray-600">🔍 Scan Resultaten ({results.length})</h2>
                         <ul>
                             {results.map((alert, idx) => (
                                 <li
                                     key={idx}
                                     className="flex items-center justify-between p-4 border-b border-gray-600 hover:bg-gray-700 cursor-pointer"
-                                    onClick={() => setSelectedAlert(alert)}
+                                   // onClick={() => setSelectedAlert(alert)}
                                 >
                                     <div className="flex items-center gap-2">
                                         {severityIcons[alert.risk] || severityIcons.Low}
